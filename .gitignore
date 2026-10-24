@@ -1,0 +1,23 @@
+# Secrets: never commit an env file anywhere
+.env
+.env.*
+*.env
+image-studio/.env
+
+# The image studio's local working files
+image-studio/.venv/
+image-studio/out/
+image-studio/compare-order.json
+
+# Build output, dependencies and test leftovers
+dist/
+node_modules/
+tools/play-test-failures/
+__pycache__/
+.DS_Store
+
+# Copyrighted style references, used locally only
+image-studio/reference/olympians/
+
+# Claude Code local state
+.claude/scheduled_tasks.lock

@@ -1,0 +1,1880 @@
+/* A Matter of Time (v3.6) — styles.
+   Black, off-white, slow. Film title sequence, not app; a tarot deck on a dark table.
+   Pace (since v3.3): zen. Nothing pops in; everything fades in and out gently. */
+
+/* Colors that animate (the recolor to the Future's accent at the end) must be registered. */
+@property --ic { syntax: "<color>"; inherits: true; initial-value: #c9c2b5; }
+@property --ic-text { syntax: "<color>"; inherits: true; initial-value: #c9c2b5; }
+@property --mc { syntax: "<color>"; inherits: true; initial-value: #c9c2b5; }
+@property --mc-text { syntax: "<color>"; inherits: true; initial-value: #c9c2b5; }
+@property --tc { syntax: "<color>"; inherits: true; initial-value: #eacc9d; }
+@property --pc { syntax: "<color>"; inherits: true; initial-value: rgba(236, 230, 218, 0.45); }
+@property --solid-to { syntax: "<length>"; inherits: false; initial-value: 160px; }
+
+:root {
+  --bg: #161614;
+  /* Text. Nothing a player needs to read is darker than --text-2.
+     --text-faint is decorative only (lines, ticks, dots), never for words. */
+  --text: #ece6da;
+  --text-2: #c9c2b5;
+  --text-faint: #8f897e;
+  --line: rgba(236, 230, 218, 0.14);
+  --card: rgba(236, 230, 218, 0.035);
+  --card-hover: rgba(236, 230, 218, 0.075);
+  /* --accent for glows and lines; --accent-text for words (game.js lightens it to 4.5:1 if needed) */
+  --accent: #9a9a9a;
+  --accent-text: #b3aea4;
+  /* Strip markers settle under a 40% tint of these, with a thin ring.
+     --mark-sota is set from story.md (SETTINGS → State of the art color) by game.js. */
+  --mark: #eacc9d;
+  --mark-event: #85837f;
+  --mark-sota: #9fb4c7;
+  --mark-tip: #5e5a55;     /* a tipping point (SETTINGS → Tipping point color) */
+
+  --serif: "Cormorant Garamond", "Cormorant", Garamond, "Times New Roman", serif;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+
+  --screen: 1000ms;       /* screen crossfades */
+  --slow: 700ms;          /* text reveals (staggered ~250 ms apart, GAP in game.js) */
+  --recolor: 1500ms;      /* everything taking on the Future's color */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --gutter: max(16px, env(safe-area-inset-left));
+  /* Timeline strip: the axis sits low enough to leave ~36px above the highest label */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --axis: calc(116px + var(--safe-top)); /* v5.6: lower, so two rows of wrapped labels fit above the line */
+  --strip-h: calc(250px + var(--safe-top)); /* room for two rows of labels below the line, each up to three lines (v5.6: long labels wrap) */
+  --reading: min(760px, 92vw);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body { overflow: hidden; }
+
+button { font: inherit; color: inherit; }
+
+em { font-style: italic; }
+
+/* Source links inside the text: a thin solid underline that takes the accent on hover */
+a.src {
+  color: inherit;
+  text-decoration: underline solid color-mix(in srgb, var(--text-2) 60%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 400ms var(--ease), color 400ms var(--ease);
+}
+a.src:hover, a.src:focus-visible { text-decoration-color: var(--accent-text); color: var(--accent-text); outline: none; }
+
+[hidden] { display: none !important; }
+
+img { -webkit-user-select: none; user-select: none; }
+
+/* ---------------------------------------------------------------------------
+   v5.8: the nebula, faint swirls and wisps of color behind the stars. Long, thin
+   ellipses at angles, blurred, drifting over minutes, so they are felt more than seen.
+   --------------------------------------------------------------------------- */
+
+.nebula {
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.nebula::before, .nebula::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  filter: blur(40px);
+  mix-blend-mode: screen;
+}
+.nebula::before {
+  background:
+    radial-gradient(ellipse 38% 7% at 22% 30%, rgba(120, 98, 160, 0.13), transparent 70%),
+    radial-gradient(ellipse 26% 5% at 30% 36%, rgba(150, 110, 140, 0.09), transparent 70%),
+    radial-gradient(ellipse 30% 9% at 78% 72%, rgba(70, 120, 132, 0.12), transparent 70%),
+    radial-gradient(ellipse 18% 4% at 70% 66%, rgba(110, 150, 160, 0.08), transparent 70%);
+  transform: rotate(-14deg);
+  animation: nebula-a 140s ease-in-out infinite alternate;
+}
+.nebula::after {
+  background:
+    radial-gradient(ellipse 34% 6% at 72% 18%, rgba(160, 104, 120, 0.09), transparent 70%),
+    radial-gradient(ellipse 24% 8% at 18% 82%, rgba(96, 104, 160, 0.1), transparent 70%),
+    radial-gradient(ellipse 50% 14% at 50% 52%, rgba(90, 80, 120, 0.05), transparent 70%);
+  transform: rotate(18deg);
+  animation: nebula-b 190s ease-in-out infinite alternate;
+}
+@keyframes nebula-a { from { transform: rotate(-14deg) translate(0, 0) scale(1); } to { transform: rotate(-8deg) translate(3%, -2%) scale(1.08); } }
+@keyframes nebula-b { from { transform: rotate(18deg) translate(0, 0) scale(1.04); } to { transform: rotate(11deg) translate(-3%, 2%) scale(1); } }
+
+/* ---------------------------------------------------------------------------
+   Ambient particles (drawn by particles.js)
+   --------------------------------------------------------------------------- */
+
+.particles {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Screens: one visible at a time, crossfading.
+   --------------------------------------------------------------------------- */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--screen) var(--ease), visibility 0s linear var(--screen);
+}
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--screen) var(--ease), visibility 0s;
+}
+
+/* Elements that fade in on cue */
+.fade { opacity: 0; transform: translateY(8px); transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+.fade.in { opacity: 1; transform: none; }
+
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ---------------------------------------------------------------------------
+   Opening disclaimer
+   --------------------------------------------------------------------------- */
+
+#disclaimer { display: grid; place-items: center; padding: 0 var(--gutter); }
+.disclaimer-inner { max-width: 34em; text-align: center; opacity: 0; }
+#disclaimer.active .disclaimer-inner { animation: fadeIn 1800ms var(--ease) 300ms forwards; }
+/* After 5 s it fades out slowly (DISCLAIMER in game.js), then the game begins. */
+#disclaimer.active.leaving .disclaimer-inner { animation: fadeOut 2200ms var(--ease) forwards; }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.disclaimer-text {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(22px, 2.8vw, 30px);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+/* Shown when content/story.md can't be loaded */
+#nostory { display: grid; place-items: center; padding: 0 var(--gutter); text-align: center; }
+.nostory-title { margin: 0 0 18px; font-family: var(--serif); font-weight: 300; font-size: clamp(38px, 6vw, 64px); }
+.nostory-text { margin: 0; font-size: 17px; line-height: 1.6; color: var(--text-2); }
+.nostory-text strong { color: var(--text); font-weight: 500; }
+
+/* ---------------------------------------------------------------------------
+   Alternating timelines (the player's Timeline)
+   A central spine; entries alternate left and right, joined by a short link and a dot.
+   `.narrow` (set by game.js on phones) collapses to one column, spine on the left.
+   --------------------------------------------------------------------------- */
+
+.atl { position: relative; }
+
+.atl-spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--line) 30%, var(--pc));
+}
+
+.atl-item { position: absolute; left: 0; right: 0; }
+.atl-item.left { right: 50%; padding-right: 46px; text-align: right; }
+.atl-item.right { left: 50%; padding-left: 46px; }
+.atl-item[data-side="center"] { text-align: center; }
+
+.atl-dot {
+  position: absolute;
+  top: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: opacity var(--slow) var(--ease);
+}
+.atl-item.left .atl-dot { right: -3.5px; }
+.atl-item.right .atl-dot { left: -3.5px; }
+.atl-item[data-side="center"] .atl-dot { left: calc(50% - 3.5px); top: 0; }
+
+.atl-link {
+  position: absolute;
+  top: 12px;
+  width: 36px;
+  height: 1px;
+  background: var(--line);
+  transform: scaleX(0);
+  transition: transform var(--slow) var(--ease);
+}
+.atl-item.left .atl-link { right: 4px; transform-origin: right; }
+.atl-item.right .atl-link { left: 4px; transform-origin: left; }
+
+.atl-card { display: inline-block; max-width: 380px; text-align: inherit; }
+.atl-item.left .atl-card { margin-left: auto; }
+
+/* Dates read exactly as written ("2040s", "Jun 2017"): never uppercased */
+.atl-date {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+/* Small caps only on the place name in a dateline */
+.dl-place { text-transform: uppercase; font-size: 0.86em; letter-spacing: 0.2em; }
+.atl-title {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23px;
+  line-height: 1.18;
+}
+
+/* History entries reveal as they scroll into view */
+.atl-history .atl-dot { opacity: 0.25; }
+.atl-history .atl-card { opacity: 0; transform: translateY(10px); transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+.atl-history.seen .atl-dot { opacity: 1; }
+.atl-history.seen .atl-link { transform: scaleX(1); }
+.atl-history.seen .atl-card { opacity: 1; transform: none; }
+
+/* Now */
+.now-dot {
+  width: 16px !important;
+  height: 16px !important;
+  left: calc(50% - 8px) !important;
+  top: -8px !important;
+  background: #fff !important;
+  animation: nowPulse 3.2s ease-in-out infinite;
+}
+@keyframes nowPulse {
+  0%, 100% { box-shadow: 0 0 16px 5px rgba(255, 255, 255, 0.5), 0 0 70px 26px rgba(255, 240, 220, 0.14); }
+  50% { box-shadow: 0 0 24px 9px rgba(255, 255, 255, 0.7), 0 0 110px 44px rgba(255, 240, 220, 0.22); }
+}
+.atl-now .atl-card { padding-top: 34px; max-width: none; opacity: 0; transition: opacity 2000ms var(--ease); }
+.atl-now.seen .atl-card { opacity: 1; }
+.now-label { margin: 0; font-family: var(--serif); font-weight: 300; font-size: 54px; line-height: 1; }
+
+/* Narrow: one column, spine on the left */
+/* --nx shifts everything right when a timeline bleeds to the screen edge (.ptl on phones) */
+.atl.narrow .atl-spine { left: calc(18px + var(--nx, 0px)); }
+.atl.narrow .atl-item { left: 0 !important; right: 0 !important; padding: 0 var(--gutter) 0 calc(46px + var(--nx, 0px)) !important; text-align: left !important; }
+.atl.narrow .atl-item .atl-dot { left: calc(14.5px + var(--nx, 0px)) !important; right: auto !important; }
+.atl.narrow .atl-item .atl-link { left: calc(22px + var(--nx, 0px)) !important; right: auto !important; width: 18px; transform-origin: left; }
+.atl.narrow .atl-item .atl-card { margin-left: 0; }
+.atl.narrow .now-dot { left: calc(10px + var(--nx, 0px)) !important; }
+.atl.narrow .atl-future .future-dot { left: calc(12px + var(--nx, 0px)) !important; }
+/* The fade mask clips to the box, so on phones the box reaches the screen edges (the Future card's glow isn't cut off) */
+.ptl.narrow { --nx: var(--gutter); margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter)); }
+
+
+/* ---------------------------------------------------------------------------
+   Timeline strip (during the game)
+   --------------------------------------------------------------------------- */
+
+.strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--strip-h);
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 1200ms var(--ease), visibility 0s linear 1200ms;
+}
+.strip.on { opacity: 1; visibility: visible; transition: opacity 1200ms var(--ease), visibility 0s; }
+/* At the Future reveal the strip rises and fades with the scroll (--away, 0 to 1, set by
+   updateStripAway() in game.js), at the same rate as the Future card moving up. */
+.strip { translate: 0 calc(var(--away, 0) * -100%); }
+.strip.on { opacity: calc(1 - var(--away, 0)); }
+.strip.tied, .strip.on.tied { transition: none; }
+/* The strip's background is its own layer, just after it (#strip-bg), so that it stays
+   opaque as the strip rises at the Future reveal: only the labels and marks fade, and the
+   story scrolling underneath never shows through them. It fades in and out with .strip.on. */
+.strip-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--strip-h);
+  z-index: 5;
+  pointer-events: none;
+  /* solid behind every row of labels (so text scrolling underneath never shows through
+     them), down to just below the lowest one (--solid-to, set on #strip-bg by layoutMarks() in game.js),
+     then an eased fade over the rest of the strip, so an emptier strip fades longer */
+  background: linear-gradient(to bottom, var(--bg) 0, var(--bg) var(--solid-to),
+    rgba(22, 22, 20, 0.9) calc(var(--solid-to) + (100% - var(--solid-to)) * 0.18),
+    rgba(22, 22, 20, 0.7) calc(var(--solid-to) + (100% - var(--solid-to)) * 0.38),
+    rgba(22, 22, 20, 0.45) calc(var(--solid-to) + (100% - var(--solid-to)) * 0.58),
+    rgba(22, 22, 20, 0.22) calc(var(--solid-to) + (100% - var(--solid-to)) * 0.76),
+    rgba(22, 22, 20, 0.07) calc(var(--solid-to) + (100% - var(--solid-to)) * 0.9),
+    rgba(22, 22, 20, 0) 100%);
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 calc(var(--away, 0) * -100%);
+  transition: opacity 1200ms var(--ease), visibility 0s linear 1200ms, --solid-to 1400ms var(--ease);
+}
+.strip.on + .strip-bg { opacity: 1; visibility: visible; transition: opacity 1200ms var(--ease), visibility 0s, --solid-to 1400ms var(--ease); }
+.strip.tied + .strip-bg { transition: none; }
+
+.strip-axis {
+  position: absolute;
+  top: var(--axis);
+  left: 16px;
+  right: 330px; /* stops short of the gauge */
+  height: 1px;
+  background: rgba(236, 230, 218, 0.45);
+  /* Both ends fade out: briefly into the past, and much longer into the future */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 42%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 42%, transparent 100%);
+}
+/* At the Future, the line takes on its color */
+.strip-axis-tint { background: linear-gradient(to right, transparent, var(--accent) 30%, color-mix(in srgb, var(--accent) 40%, transparent) 65%, transparent); opacity: 0; transition: opacity var(--recolor) var(--ease); }
+.strip.recolor .strip-axis-tint { opacity: 0.8; }
+
+.s-hist, .s-hmark, .s-now, .s-mark { position: absolute; top: var(--axis); }
+
+.s-hist { width: 3px; height: 3px; margin: -1px 0 0 -1.5px; border-radius: 50%; background: var(--text); opacity: 0.4; transition: background var(--recolor) var(--ease); }
+.strip.recolor .s-hist { background: var(--accent); }
+/* The major history events, labeled from the start: quieter than the player's markers */
+.s-hmark { width: 0; height: 0; opacity: 0; transition: opacity 900ms var(--ease); }
+.s-hmark.on { opacity: 1; }
+.strip.phone .s-hist, .strip.phone .s-hmark { display: none; } /* phones: the strip starts at Now */
+.s-hlabel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg);
+  transition: transform 700ms var(--ease);
+}
+.s-hmark.up .s-hlabel { flex-direction: column-reverse; }
+.s-hmark .s-date { color: var(--text-2); font-weight: 400; }
+.s-hmark.up .s-date { margin: 2px 0 0; }
+.s-hmark .s-short { color: var(--text-2); }
+.s-hmark .s-lead { opacity: 1; border-top-color: rgba(236, 230, 218, 0.18); }
+
+.s-now {
+  width: 8px;
+  height: 8px;
+  margin: -3.5px 0 0 -4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.45);
+}
+.s-now-label {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* A marker: its year in its own round color (--rc) and its card under a tint (--tc).
+   Both recolor to the Future's accent at the end. */
+.s-mark {
+  width: 0;
+  height: 0;
+  --mc: var(--rc);
+  --mc-text: var(--rc-text);
+  --tc: var(--mark);
+  transition: --mc var(--recolor) var(--ease), --mc-text var(--recolor) var(--ease), --tc var(--recolor) var(--ease);
+}
+.s-mark.event { --tc: var(--mark-event); }
+.strip.recolor .s-mark { --mc: var(--accent); --mc-text: var(--accent-text); --tc: var(--accent); }
+
+/* A tiny copy of the card, centered on its date on the line (the axis runs through its
+   middle). Invisible until the flying card lands and crossfades into it. */
+.s-card {
+  position: absolute;
+  left: -5px;
+  top: -9px;
+  width: 10px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 400ms var(--ease);
+}
+.s-card .cface { position: relative; display: block; height: 100%; box-shadow: 0 0 9px color-mix(in srgb, var(--mc) 55%, transparent); }
+/* As it settles, a wash of the marker color fades to a soft 40% tint (~600 ms), with a thin ring */
+.s-card .cface::after { content: ""; position: absolute; inset: 0; background: var(--tc); opacity: 0; }
+.s-mark.landed .s-card .cface::after { animation: markWash 600ms var(--ease) forwards; }
+@keyframes markWash { 0% { opacity: 0; } 45% { opacity: 0.7; } 100% { opacity: 0.4; } }
+.s-card::after { content: ""; position: absolute; inset: -1px; border: 1px solid var(--tc); border-radius: 1px; opacity: 0; transition: opacity 600ms var(--ease); }
+.s-mark.landed .s-card::after { opacity: 0.9; }
+/* Events: gray, quieter, with a dashed leader line */
+.s-mark.event .s-card .cface > * { filter: grayscale(1) brightness(0.75); }
+.s-mark.event .s-short { font-style: italic; color: var(--text-2); }
+/* Milestones: a small diamond in a cool tint, never a card. Hover or tap for its definition. */
+.s-mark.sota { --tc: var(--mark-sota); }
+/* v5.2: a card on the strip shows, on hover or tap, the Choice made on it (v5.3: an Event, its summary). */
+.s-mark:not(.point) .s-card { pointer-events: auto; cursor: help; }
+/* Cards above diamonds: a card nudged beside a diamond (the first card clears the Now dot) keeps its own body, and the diamond its uncovered part. */
+.s-mark:not(.point) { z-index: 1; }
+.s-mark.point .s-card { left: -4px; top: -4px; width: 8px; height: 8px; transform: rotate(45deg) scale(0.4); transition: opacity 900ms var(--ease), transform 900ms var(--ease); pointer-events: auto; cursor: help; }
+.s-mark.point.landed .s-card { transform: rotate(45deg); }
+.s-mark.point .s-card::before { content: ""; position: absolute; inset: -9px 0; } /* a taller target to hover or tap, no wider, so it never covers a neighboring card */
+.s-mark.point .s-card .cface { height: 100%; background: color-mix(in srgb, var(--tc) 75%, #000); box-shadow: 0 0 9px color-mix(in srgb, var(--tc) 70%, transparent); }
+.s-mark.point .s-card .cface img, .s-mark.point .s-card .cface::after, .s-mark.point .s-card::after { display: none; }
+.s-mark.point .s-short { color: var(--text-2); }
+/* A tipping point (v5.8): a small shattered shape, never a card or a disc */
+.s-mark.tipmark { --tc: var(--mark-tip); }
+.s-mark.tipmark.point .s-card { left: -6px; top: -6px; width: 12px; height: 12px; transform: scale(0.4) rotate(-20deg); transition: opacity 1400ms var(--ease), transform 1400ms var(--ease); cursor: default; }
+.s-mark.tipmark.point.landed .s-card { transform: none; }
+.shatter { display: block; width: 100%; height: 100%; overflow: visible; }
+.shatter path { fill: color-mix(in srgb, var(--tc, #5e5a55) 75%, #fff 12%); stroke: color-mix(in srgb, var(--tc, #5e5a55) 45%, #fff 55%); stroke-width: 0.7; stroke-linejoin: round; filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9)); }
+/* The burst as the world tips: fragments of the line itself (see shatterLine() in game.js) */
+.s-shard { position: absolute; top: var(--axis); height: 1.5px; background: rgba(236, 230, 218, 0.85); box-shadow: 0 0 3px rgba(236, 230, 218, 0.4); pointer-events: none; transform: translate(-50%, -50%); }
+/* Every label is placed by layoutMarks() in game.js (a translate from the marker), in a
+   row above or below the line; a thin leader line joins it to its marker if it can't sit
+   right over it. Moves ease; a new marker's label starts in place (.fresh). */
+.s-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: 118px; /* v5.6: a long label breaks into two balanced lines (.s-short) */
+  text-align: center;
+  opacity: 0;
+  text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg);
+  transition: opacity 1200ms var(--ease) 300ms, transform 700ms var(--ease);
+}
+.s-label { display: flex; flex-direction: column; align-items: center; }
+.s-mark.up .s-label { flex-direction: column-reverse; }
+.s-mark.fresh .s-label, .s-mark.fresh .s-lead { transition: none; }
+.s-lead {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 1px solid rgba(236, 230, 218, 0.3);
+  transform-origin: 0 0;
+  opacity: 0;
+  transition: opacity 900ms var(--ease) 300ms, width 700ms var(--ease), transform 700ms var(--ease);
+}
+.s-mark.event .s-lead { border-top-style: dashed; }
+.s-mark.landed.led .s-lead { opacity: 1; }
+/* The year, exactly as written, in the round's color: the strip becomes a row of colored years */
+.s-date {
+  display: block;
+  font-size: 11px;
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--mc-text);
+  margin-bottom: 2px;
+}
+.s-mark.up .s-date { margin: 2px 0 0; }
+/* The Timeline label: always shown, never truncated, wraps if it must */
+.s-short {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.2;
+  color: var(--text);
+  text-wrap: balance;
+}
+.s-mark.landed .s-card { opacity: 1; }
+.s-mark.landed .s-label { opacity: 1; }
+
+/* A card in flight to the strip */
+.tcard.ghost { position: fixed; inset: auto; z-index: 8; margin: 0; pointer-events: none; transform-origin: center; animation: none !important; }
+
+/* ---------------------------------------------------------------------------
+   The table: deck | card | reading column
+   --------------------------------------------------------------------------- */
+
+#table { overflow-y: auto; overflow-x: hidden; }
+
+.table-inner {
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: calc(var(--strip-h) - 4px) 32px 110px;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 100px minmax(220px, 300px) minmax(0, 760px);
+  grid-template-areas: "deck card reading";
+  gap: 48px;
+  justify-content: center;
+  align-items: start;
+}
+.deck-col { grid-area: deck; position: sticky; top: calc(var(--strip-h) + 8px); padding-top: 24px; }
+.card-col { grid-area: card; position: sticky; top: calc(var(--strip-h) - 4px); }
+.reading { grid-area: reading; width: 100%; max-width: var(--reading); }
+
+#table.revealing .stage { grid-template-columns: 100px minmax(240px, 340px) minmax(0, 760px); }
+
+
+/* Cards. Art is 9:16 with square corners; every card, at every size, is rounded
+   here at 1/32 of its width. Each card is a size container, so 100cqw is its width. */
+.tcard, .deck-card, .cardthumb, .s-card { container-type: inline-size; }
+.tface, .cface { border-radius: calc(100cqw / 32); overflow: hidden; }
+.tface img, .cface img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Deck. Slides in from the left as the game begins. */
+.deck { position: relative; width: 100%; aspect-ratio: 9 / 16; }
+.deck.waiting { opacity: 0; transform: translateX(-90px); }
+.deck.arrive { animation: deckIn 1000ms cubic-bezier(0.16, 0.8, 0.3, 1) both; }
+@keyframes deckIn {
+  from { opacity: 0; transform: translateX(-90px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Play again: the table clears before the deck comes back */
+.table-inner { transition: opacity 500ms var(--ease); }
+.table-inner.clearing { opacity: 0; }
+.deck-card {
+  position: absolute;
+  inset: 0;
+  transform: translate(calc(var(--i) * 2px), calc(var(--i) * -2.5px)) rotate(var(--rot));
+}
+.deck-card .cface { height: 100%; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7); }
+
+/* The drawn card */
+.card-slot { position: relative; width: 100%; aspect-ratio: 9 / 16; }
+.tcard { position: absolute; inset: 0; perspective: 1400px; z-index: 1; }
+.tcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.tface {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  box-shadow: 0 22px 40px -6px rgba(0, 0, 0, 0.8);
+}
+.tfront { transform: rotateY(180deg); }
+.tcard.face-up { animation: cardFloat 8s ease-in-out infinite; }
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Soft glow behind the Future card */
+.card-glow {
+  position: absolute;
+  inset: -22% -40%;
+  /* a long, slow falloff */
+  background: radial-gradient(closest-side, var(--accent), color-mix(in srgb, var(--accent) 45%, transparent) 40%, transparent 100%);
+  filter: blur(28px);
+  opacity: 0;
+  transition: opacity 1800ms var(--ease);
+  pointer-events: none;
+}
+.card-glow.in { opacity: 0.22; }         /* every card glows softly in its round's color */
+.card-glow.in.strong { opacity: 0.5; }  /* the Future */
+
+/* Round: news-style Scenario */
+.round-view { transition: opacity 900ms var(--ease); }
+.round-view.out { opacity: 0; }
+
+/* "Round 1 of 4", centered above the drawn card. It always keeps its line, so the card
+   sits at the same height for every round and for the Future. */
+.round-marker {
+  margin: 0 0 16px;
+  min-height: 1.6em;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* Events: "Out of your hands" above the headline, no Choices */
+.event-label {
+  display: inline-block;
+  margin: 0 0 18px;
+  padding: 5px 12px;
+  border: 1px dashed var(--text-faint);
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* "2040s · GENEVA": the date as written; small caps only on the place (.dl-place) */
+.dateline {
+  margin: 0 0 14px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--accent-text);
+}
+.headline {
+  margin: 0 0 26px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(36px, 4.3vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.003em;
+}
+.body-text {
+  font-size: 19.5px;
+  line-height: 1.65;
+  color: var(--text);
+}
+.body-text p { margin: 0 0 0.9em; }
+.body-text p:last-child { margin-bottom: 0; }
+.question {
+  margin: 34px 0 18px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(24px, 2.4vw, 28px);
+  color: var(--accent-text);
+}
+
+.choices { display: grid; gap: 12px; }
+
+.choice {
+  appearance: none;
+  position: relative;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 20px 24px;
+  font-size: 17.5px;
+  line-height: 1.5;
+  font-weight: 300;
+  cursor: pointer;
+  transition:
+    opacity var(--slow) var(--ease),
+    transform 300ms var(--ease),
+    background 400ms var(--ease),
+    border-color 400ms var(--ease),
+    box-shadow 400ms var(--ease);
+}
+.choice.fade { transform: translateY(10px); }
+.choice.fade.in { transform: none; }
+.choice.in:hover, .choice.in:focus-visible {
+  transform: translateY(-3px);
+  background: var(--card-hover);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 10px 28px -14px rgba(0, 0, 0, 0.9), 0 0 22px -8px var(--accent);
+  outline: none;
+}
+.choice.in:active { transform: scale(0.98); }
+.choice.picked, .choice.picked:hover {
+  transform: none;
+  border-color: var(--accent);
+  background: var(--card-hover);
+  box-shadow: 0 0 36px -10px var(--accent);
+}
+/* The other two fade in place (700 ms, CHOICE_FADE in game.js); game.js then removes
+   them from layout and glides the chosen one up. Nothing collapses, so nothing jumps. */
+.choice.dim, .choice.dim.in { opacity: 0; transition: opacity 700ms var(--ease); }
+.choices.locked { pointer-events: none; }
+.choices.locked .choice, .choices.locked .choice.in:hover { cursor: default; transform: none; }
+
+/* "As a result…" */
+.result {
+  margin-top: 26px;
+  padding: 26px 26px 30px;
+  background: rgba(236, 230, 218, 0.03);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: 6px;
+}
+/* About 1.5 times the body size, in the display font */
+.result-label {
+  margin: 0 0 12px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 29px;
+  line-height: 1.1;
+  color: var(--accent-text);
+}
+.result-text p { margin: 0 0 0.6em; }
+.result-text p:last-child { margin-bottom: 0; }
+.result-text {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23.5px;
+  line-height: 1.5;
+}
+.result-text .fade { transform: none; transition-duration: 1000ms; }
+.result-actions { margin-top: 28px; }
+
+/* Future */
+.future-date {
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.5em;
+  color: var(--text-2);
+}
+.future-title {
+  margin: 0 0 14px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(50px, 6.4vw, 96px);
+  line-height: 1;
+  text-shadow: 0 0 60px var(--accent);
+}
+.future-title.fade { transform: none; filter: blur(8px); transition: opacity 2600ms var(--ease), filter 2600ms var(--ease); }
+.future-title.fade.in { filter: blur(0); }
+.future-tagline {
+  margin: 0 0 40px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(21px, 2.2vw, 26px);
+  color: var(--accent-text);
+}
+/* How we got here: the bridge from the player's choices to the story, given room */
+.future-past { margin: -8px 0 44px; max-width: 34em; }
+.future-past-label {
+  margin: 0 0 14px;
+  font-size: 10.5px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.future-past-text p {
+  margin: 0 0 0.8em;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.future-past-text p.fade { transition-duration: 1600ms; }
+.future-past-text p:last-child { margin-bottom: 0; }
+.future-text p {
+  margin: 0 0 1.05em;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23px;
+  line-height: 1.65;
+}
+.future-hint {
+  margin: 10px 0 0;
+  font-size: 10.5px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.future-hint.in { animation: breathe 3.6s ease-in-out infinite; }
+
+.reveal-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
+
+/* ---------------------------------------------------------------------------
+   The Interlude: the year counting up to the next card
+   --------------------------------------------------------------------------- */
+
+.interlude {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+/* A faint wash of the color of the round just played */
+.interlude::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 45% at 50% 50%, color-mix(in srgb, var(--accent, #000) 16%, transparent), transparent 100%);
+  pointer-events: none;
+}
+.interlude.on { opacity: 1; pointer-events: auto; }
+/* v6.1: the year in the middle, the milestones it passes in a column on the right */
+.interlude { padding: calc(var(--strip-h) + 12px) var(--gutter) 24px; }
+.interlude-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 34em) minmax(0, 1fr);
+  grid-template-areas: ". . sotas" ". year sotas" ". gap sotas" ". lead sotas" ". actions sotas" ". . sotas";
+  grid-template-rows: 1fr auto auto auto auto 1fr;
+  column-gap: 48px;
+}
+.il-year { grid-area: year; }
+.il-gap { grid-area: gap; }
+.il-lead { grid-area: lead; }
+.il-actions { grid-area: actions; margin-top: 34px; min-height: 48px; }
+.il-sotas { grid-area: sotas; align-self: center; justify-self: start; width: min(340px, 100%); max-height: 100%; overflow-y: auto; scrollbar-width: none; text-align: left; }
+/* The year: an odometer, each digit rolling up into place */
+.il-year {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(72px, 9vw, 128px);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--accent-text, var(--text));
+}
+.od-d {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  height: 1.1em;
+  vertical-align: top;
+  -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+}
+.od-d > span { display: block; }
+.od-d > span:not(:last-child) { position: absolute; inset: 0; }
+/* A milestone the count passed */
+.il-sota {
+  margin: 0 0 14px;
+  padding: 14px 16px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent, #888) 45%, transparent);
+  border-radius: 6px;
+  background: rgba(20, 20, 18, 0.86);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease);
+}
+.il-sota.in { opacity: 1; transform: none; }
+.il-sota p { margin: 0; }
+.il-sota-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-text, var(--text-2)); }
+.il-sota-head { margin-top: 5px !important; font-family: var(--serif); font-size: 20px; line-height: 1.25; color: var(--text); }
+.il-sota-text { margin-top: 6px !important; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
+.il-sota-why { margin-top: 6px !important; font-size: 13.5px; line-height: 1.5; font-style: italic; color: var(--text-2); }
+@media (max-width: 1080px) {
+  .interlude-inner { grid-template-columns: minmax(0, 1fr) minmax(0, 30em) minmax(0, 1fr); column-gap: 24px; }
+}
+@media (max-width: 760px) {
+  .interlude { overflow-y: auto; }
+  .interlude { place-items: start center; padding: calc(var(--strip-h) + 20px) var(--gutter) 32px; }
+  .interlude-inner { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-areas: "year" "gap" "sotas" "lead" "actions"; grid-template-rows: auto; }
+  .il-sotas { justify-self: center; margin-top: 18px; max-height: none; overflow: visible; }
+}
+.il-gap {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(30px, 4vw, 46px);
+  color: var(--accent-text, var(--text));
+}
+.il-lead {
+  margin: 22px 0 0;
+  font-size: clamp(17px, 1.6vw, 20px);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* ---------------------------------------------------------------------------
+   The tipping point: full screen, above everything, no card and no image
+   --------------------------------------------------------------------------- */
+
+.tipping {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  justify-items: center;
+  padding: 56px var(--gutter);
+  overflow-y: auto;
+  text-align: center;
+  background: rgba(8, 8, 7, 0.975);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2400ms var(--ease);
+}
+.tipping::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 55% at 50% 50%, color-mix(in srgb, var(--accent, #5e5a55) 22%, transparent), transparent 100%);
+  pointer-events: none;
+  animation: tp-mourn 14s ease-in-out infinite; /* the wash breathes, very slowly */
+}
+@keyframes tp-mourn { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.tipping.on { opacity: 1; pointer-events: auto; }
+.tipping-inner { position: relative; max-width: 36em; margin: auto 0; } /* centered while it fits, from the top once it doesn't */
+.tp-label {
+  margin: 0 0 30px;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.tp-headline {
+  margin: 0 0 40px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.2;
+  color: var(--text);
+}
+.tp-section + .tp-section { margin-top: 56px; }
+/* v5.8: each part's title is clearer than its body, which is softer and quieter */
+.tp-text .tp-sub {
+  margin: 0 0 18px;
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.1vw, 26px);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+.tp-text p {
+  margin: 0 0 1.1em;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(19px, 1.7vw, 22px);
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--text) 55%, var(--text-2));
+}
+.tp-text p:last-child { margin-bottom: 0; }
+.tp-text .fade { transform: none; transition-duration: 2200ms; }
+.tipping .ep-actions { margin-top: 38px; }
+.tp-hint { margin-top: 28px; opacity: 0; transition: opacity 900ms var(--ease); }
+.tp-hint.in { opacity: 1; }
+@media (max-width: 760px) { .tp-text p { font-size: 18px; } .tp-text .tp-sub { font-size: 21px; } .tp-label { margin-bottom: 22px; } .tp-headline { font-size: 25px; margin-bottom: 28px; } }
+
+/* ---------------------------------------------------------------------------
+   Buttons
+   --------------------------------------------------------------------------- */
+
+.btn {
+  appearance: none;
+  position: relative;
+  background: transparent;
+  border: 1px solid rgba(236, 230, 218, 0.38);
+  border-radius: 999px;
+  padding: 14px 30px;
+  min-height: 48px;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 500ms var(--ease), color 500ms var(--ease), background 500ms var(--ease), transform 200ms var(--ease);
+}
+/* A soft line sweeps along the bottom edge on hover */
+.btn::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 9px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 450ms var(--ease);
+}
+.btn:hover, .btn:focus-visible { border-color: rgba(236, 230, 218, 0.85); background: rgba(236, 230, 218, 0.05); outline: none; }
+.btn:hover::after, .btn:focus-visible::after { transform: scaleX(1); }
+.btn:active { transform: scale(0.98); }
+.btn-quiet { border-color: transparent; color: var(--text-2); }
+.btn-quiet:hover, .btn-quiet:focus-visible { color: var(--text); border-color: var(--line); }
+
+.mute {
+  position: fixed;
+  z-index: 10;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color 400ms var(--ease), border-color 400ms var(--ease);
+}
+/* Back (to Home), top left: on the Disclaimer and the game.
+   The same pill as About's Back. */
+.ex-back.home-corner {
+  position: fixed;
+  z-index: 10;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  min-height: 38px;
+  padding: 8px 18px 8px 14px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 900ms var(--ease), visibility 0s linear 900ms, color 400ms var(--ease), border-color 400ms var(--ease);
+}
+body[data-screen="disclaimer"] .home-corner,
+body[data-screen="table"] .home-corner {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 900ms var(--ease), visibility 0s, color 400ms var(--ease), border-color 400ms var(--ease);
+}
+.mute:hover, .mute:focus-visible { color: var(--text); border-color: rgba(236, 230, 218, 0.4); outline: none; }
+.mute .cross { display: none; }
+.mute.muted .waves { display: none; }
+.mute.muted .cross { display: inline; }
+
+/* ---------------------------------------------------------------------------
+   "See what you chose"
+   --------------------------------------------------------------------------- */
+
+.explain {
+  max-width: 1060px;
+  margin: 110px auto 0;
+  padding-top: 64px;
+  border-top: 1px solid var(--line);
+}
+.explain-title {
+  margin: 0 0 56px;
+  text-align: center;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(34px, 5vw, 50px);
+}
+
+/* The player's Timeline. Starts at Now: the few history entries above it fade out upward. */
+.ptl {
+  margin-bottom: 110px;
+  /* the history above Now dissolves slowly: the fade only reaches full strength a little below Now */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, 0.35) calc(var(--fade-to, 0px) * 0.6), #000 calc(var(--fade-to, 0px) + 60px));
+  mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, 0.35) calc(var(--fade-to, 0px) * 0.6), #000 calc(var(--fade-to, 0px) + 60px));
+  transition: --pc var(--recolor) var(--ease);
+}
+/* Each item starts in its own round's color (--rc), then everything (markers, dates,
+   connectors, the spine) slowly takes on the Future's accent: .recolor, set by game.js */
+.ptl .atl-item { --ic: var(--rc, var(--text-2)); --ic-text: var(--rc-text, var(--text-2)); transition: --ic var(--recolor) var(--ease), --ic-text var(--recolor) var(--ease); }
+.ptl.recolor { --pc: var(--accent); }
+.ptl.recolor .atl-item { --ic: var(--accent); --ic-text: var(--accent-text); }
+.ptl .atl-history .atl-dot { background: var(--ic); }
+.ptl .atl-history .atl-date { color: var(--ic-text); }
+.ptl .atl-history .atl-title { font-size: 17px; color: var(--text-2); }
+.ptl .atl-history .atl-date { margin-bottom: 2px; }
+.ptl .atl-history .atl-dot { width: 5px; height: 5px; top: 10px; }
+.ptl .atl-history.left .atl-dot { right: -2.5px; }
+.ptl .atl-history.right .atl-dot { left: -2.5px; }
+.ptl .atl-now .atl-card { padding-top: 28px; }
+.ptl .now-label { font-size: 40px; }
+
+/* The player's cards and Events: the dot and connector meet the entry at --cy, its date
+   line or its middle (set by connect() in game.js) */
+.atl-decision .atl-dot { background: var(--ic); box-shadow: 0 0 12px var(--ic); width: 9px; height: 9px; top: calc(var(--cy, 22px) - 4.5px); }
+.atl-decision.left .atl-dot { right: -4.5px; }
+.atl-decision.right .atl-dot { left: -4.5px; }
+.atl-decision .atl-link { top: var(--cy, 22px); background: var(--ic); opacity: 0.6; transform: scaleX(1); }
+.atl-decision .atl-card {
+  display: flex;
+  gap: 18px;
+  max-width: 470px;
+  padding: 18px;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--ic) 40%, transparent);
+  border-radius: 6px;
+}
+.atl-decision.left .atl-card { flex-direction: row-reverse; }
+.atl-thumb { flex: none; width: 70px; }
+.cardthumb .cface { aspect-ratio: 9 / 16; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7); }
+.atl-body { min-width: 0; }
+.atl-decision .atl-date { color: var(--ic-text); }
+.atl-decision .atl-title { font-size: 21px; margin-bottom: 14px; }
+.atl-label { margin: 0 0 4px; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-2); }
+.atl-choice { margin: 0 0 14px; font-size: 15px; line-height: 1.5; }
+.atl-consequence { margin: 0; font-family: var(--serif); font-style: italic; font-size: 17.5px; line-height: 1.45; color: var(--text-2); }
+/* v5.6: what a Choice did to each Value: the Value's pill, then the change in white */
+.vchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.vchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vc) 20%, transparent);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.vchip-name { letter-spacing: 0.18em; text-transform: uppercase; color: var(--vc-text); }
+.vchip-n { color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+/* A Value that no longer counted (after the tipping point): struck through, grayed */
+.vchip.lost { background: rgba(236, 230, 218, 0.06); }
+/* One unbroken strike across the whole pill, the gap between name and number included */
+.vchip.lost { position: relative; }
+.vchip.lost .vchip-name, .vchip.lost .vchip-n { color: var(--text-2); }
+.vchip.lost::after { content: ""; position: absolute; left: 9px; right: 9px; top: calc(50% - 0.5px); height: 1px; background: var(--text-2); pointer-events: none; }
+.atl-tip .read-toggle { margin-top: 12px; }
+.atl-tip-more { padding-top: 12px; }
+.atl-tip-more .atl-label { margin-top: 12px; }
+.atl-why { margin: 6px 0 0; font-family: var(--serif); font-style: italic; font-size: 16px; line-height: 1.45; color: var(--text-2); }
+
+/* Events in the player's Timeline: quieter, no accent, dashed connector */
+.atl-event .atl-dot { width: 7px; height: 7px; top: calc(var(--cy, 19px) - 3.5px); background: var(--ic); }
+.atl-event.left .atl-dot { right: -3.5px; }
+.atl-event.right .atl-dot { left: -3.5px; }
+.atl-event .atl-link { top: var(--cy, 19px); height: 0; background: none; border-top: 1px dashed var(--ic); transform: scaleX(1); }
+.atl-event .atl-date { color: var(--ic-text); }
+.atl-event .atl-card {
+  display: flex;
+  gap: 14px;
+  max-width: 400px;
+  padding: 14px;
+  text-align: left;
+  border: 1px dashed rgba(179, 174, 164, 0.7);
+  border-radius: 6px;
+}
+.atl-event.left .atl-card { flex-direction: row-reverse; }
+.atl-evmark { flex: none; align-self: flex-start; width: 12px; aspect-ratio: 9 / 16; margin-top: 4px; background: var(--mark-event); border-radius: 1px; opacity: 0.75; }
+.atl-event .atl-title { font-size: 18px; margin: 0; color: var(--text-2); }
+/* State of the Art on the player's Timeline: like an Event, but solid and cool; points have no card */
+.atl-sota .atl-link { border-top-style: solid; opacity: 0.7; }
+.atl-sota .atl-dot { border-radius: 1px; transform: rotate(45deg); }
+.atl-sota .atl-card { border: 1px solid color-mix(in srgb, var(--ic) 45%, transparent); }
+.atl-point .atl-card { padding: 10px 14px; }
+.atl-tip .atl-dot { width: 13px; height: 13px; top: calc(var(--cy, 19px) - 6.5px); background: none; --tc: var(--ic); }
+.atl-tip.left .atl-dot { right: -6.5px; }
+.atl-tip.right .atl-dot { left: -6.5px; }
+.atl-tip .atl-link { border-top-style: solid; }
+.atl-tip .atl-card { border: 1px solid color-mix(in srgb, var(--ic) 60%, transparent); background: rgba(0, 0, 0, 0.35); }
+.atl-point .atl-title { font-size: 16px; }
+.atl-tag { margin: 0 0 6px; font-size: 9.5px; letter-spacing: 0.24em; text-transform: uppercase; font-style: italic; color: var(--text-2); }
+
+/* The Future: the biggest, brightest thing on the Timeline */
+.atl-future .atl-card { max-width: none; padding-top: 44px; }
+.future-dot {
+  width: 16px !important;
+  height: 16px !important;
+  left: calc(50% - 8px) !important;
+  top: -8px !important;
+  background: var(--accent) !important;
+  box-shadow: 0 0 24px 8px var(--accent), 0 0 90px 30px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.atl-future .future-thumb { display: block; width: 170px; margin: 0 auto 26px; }
+.atl-future .future-thumb .cface { box-shadow: 0 0 60px -6px var(--accent), 0 14px 30px rgba(0, 0, 0, 0.8); }
+.future-name { margin: 8px 0 6px; font-family: var(--serif); font-size: 56px; font-weight: 300; line-height: 1.02; text-shadow: 0 0 40px var(--accent); }
+.future-tag { margin: 0; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--accent-text); }
+.atl.narrow .atl-future .future-thumb { margin-left: -38px; } /* over the spine, which ends behind it */
+
+/* Value bars */
+.values-hint { margin: 0 0 40px; text-align: center; font-size: 13.5px; color: var(--text-2); }
+
+.bars { max-width: 700px; margin: 0 auto; padding: 0 var(--gutter); display: grid; gap: 6px; }
+/* Each Value is one clickable band: pill, bar and end labels. Hovering lifts the whole band. */
+.vrow {
+  --vc: var(--accent);
+  --vc-text: var(--accent-text);
+  padding: 14px 18px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 300ms var(--ease), transform 300ms var(--ease), box-shadow 300ms var(--ease);
+}
+.vrow:hover, .vrow.open, .vrow:focus-within {
+  background: rgba(236, 230, 218, 0.045);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vc) 22%, transparent);
+}
+.vrow:hover { transform: translateY(-2px); }
+.vhead { outline: none; }
+.vrow:has(.vhead:focus-visible) { box-shadow: inset 0 0 0 1px var(--vc); }
+.vtop { display: flex; justify-content: space-between; align-items: center; margin: 0 0 14px; }
+.vpill {
+  display: inline-block;
+  padding: 4px 12px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vc) 20%, transparent);
+  color: var(--vc-text);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.vchev {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-2);
+  transition: transform 300ms var(--ease), color 300ms var(--ease);
+}
+.vrow:hover .vchev { color: var(--text); }
+.vrow.open .vchev { transform: rotate(45deg); color: var(--vc-text); }
+
+.vtrack {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(236, 230, 218, 0.07);
+}
+.vcentre { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 1px; background: var(--text-faint); }
+.vfill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--vc);
+  box-shadow: 0 0 12px -2px var(--vc);
+  transition: width 1200ms var(--ease);
+}
+/* Square where the bar meets the centre line; rounded only at the outer tip */
+.vfill.pos { left: 50%; border-radius: 0 999px 999px 0; }
+.vfill.neg { right: 50%; border-radius: 999px 0 0 999px; }
+
+.vends { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-2); }
+
+.vdetail {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 300ms var(--ease), opacity 300ms var(--ease);
+}
+.vrow.open .vdetail { grid-template-rows: 1fr; opacity: 1; }
+.vdetail-clip { overflow: hidden; min-height: 0; }
+.vdetail-inner { padding: 20px 0 6px; }
+.vd-label { margin: 0 0 4px; font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--vc-text); }
+.vd-landed em { color: var(--vc-text); }
+.vdetail-inner { cursor: auto; }
+.vd-text { margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: var(--text-2); }
+.vd-landed { margin: 4px 0 0; font-family: var(--serif); font-size: 20px; line-height: 1.4; }
+
+/* v5.6: after a tipping point, the Values that stopped counting: grayed out at where they
+   stood the moment before, still open to read */
+.vrow.lost { --vc: #77736c !important; --vc-text: var(--text-2) !important; }
+.vrow.lost .vfill { box-shadow: none; opacity: 0.7; }
+.vrow.lost .vpill { text-decoration: line-through; text-decoration-thickness: 1px; }
+.vrow.lost .vends { opacity: 0.75; }
+.explain .bars { margin-bottom: 110px; }
+.explain-title.values-first { margin-bottom: 8px; }
+
+.explain-actions { justify-content: center; margin-top: 64px; }
+.signature {
+  margin: 56px 0 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Mid-size and phone
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .stage { grid-template-columns: 72px minmax(190px, 230px) minmax(0, 760px); gap: 32px; }
+  #table.revealing .stage { grid-template-columns: 72px minmax(200px, 260px) minmax(0, 760px); }
+  .table-inner { padding-left: 24px; padding-right: 24px; }
+}
+
+@media (max-width: 760px) {
+  :root { --axis: calc(94px + var(--safe-top)); --strip-h: calc(238px + var(--safe-top)); } /* room for the last-resort third row of labels below the line */
+  .s-label, .s-hlabel { max-width: 84px; }
+  .s-short { font-size: 9px; line-height: 1.2; }
+  .s-date { font-size: 9px; letter-spacing: 0.02em; margin-bottom: 1px; }
+  .gauge { width: 82px; right: max(10px, env(safe-area-inset-right)); top: calc(var(--safe-top) + 56px); }
+  .g-title { font-size: 7.5px; letter-spacing: 0.14em; }
+  .g-chart { height: 32px; }
+  .g-drop { width: min(250px, calc(100vw - 32px)); }
+  .g-name { font-size: 9.5px; }
+  .g-cap { max-width: 200px; font-size: 11px; }
+  .event-panel { padding-top: calc(var(--strip-h) + 4px); }
+  .ep-inner { padding: 26px 20px 24px; }
+  .strip-axis { right: 92px; }
+
+  .table-inner { padding: calc(var(--strip-h) - 6px) var(--gutter) 96px; }
+  .stage {
+    grid-template-columns: 44px 1fr 44px;
+    grid-template-areas: "deck card ." "reading reading reading";
+    gap: 22px 8px;
+  }
+  #table.revealing .stage { grid-template-columns: 44px 1fr 44px; }
+
+  .deck-col, .card-col { position: static; }
+  .deck-col { padding-top: 6px; }
+  .card-col { justify-self: center; width: min(44vw, 200px); }
+  #table.revealing .card-col { width: min(56vw, 250px); }
+  .card-glow { inset: -18% -24%; }
+
+  .round-marker { margin-bottom: 10px; font-size: 10px; }
+  .headline { font-size: 33px; }
+  .body-text { font-size: 18px; }
+  .question { margin-top: 28px; font-size: 23px; }
+  .choice { padding: 16px 18px; font-size: 16.5px; }
+  .result { padding: 20px 20px 22px; }
+  .result-text { font-size: 20px; }
+  .result-label { font-size: 26px; }
+  .future-title { font-size: 52px; }
+  .future-text p { font-size: 21.5px; }
+  .future-past-text p { font-size: 18px; }
+
+  .explain { margin-top: 80px; padding-top: 48px; }
+  .atl-title { font-size: 21px; }
+  .atl-decision .atl-card { flex-direction: column !important; padding: 16px; }
+  .atl-event .atl-card { flex-direction: row !important; }
+  .atl-thumb { width: 60px; }
+  .atl-future .future-thumb { width: 140px; }
+  .future-name { font-size: 44px; }
+  .now-label { font-size: 44px; }
+  .vrow { padding: 12px 12px 14px; }
+  .bars { padding: 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion: simple fades instead of movement
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .fade, .fade.in, .choice, .atl-history .atl-card { transform: none !important; }
+  .deck.waiting, .deck.arrive { transform: none !important; }
+  @keyframes deckIn { from { opacity: 0; } to { opacity: 1; } }
+  .tcard.face-up, .now-dot, .future-hint.in, .tipping::before, .nebula::before, .nebula::after { animation: none !important; }
+  .choice.in:hover, .choice.in:active, .btn:active, .vrow:hover { transform: none !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   v3.6: summaries, the Event panel, the capability gauge, tooltips
+   --------------------------------------------------------------------------- */
+
+/* A Scenario shows its summary; "Read the full story" opens the rest below it */
+.summary p { margin: 0 0 0.9em; }
+.summary p:last-child { margin-bottom: 0; }
+.read-toggle {
+  appearance: none;
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-text) 45%, transparent);
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color 300ms var(--ease), border-color 300ms var(--ease), opacity var(--slow) var(--ease), transform var(--slow) var(--ease);
+}
+.read-toggle:hover, .read-toggle:focus-visible { color: var(--accent-text); border-color: var(--accent-text); outline: none; }
+/* Smooth height and fade: the row grows from 0fr to 1fr */
+.expand { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 700ms var(--ease), opacity 700ms var(--ease); }
+.expand.open { grid-template-rows: 1fr; opacity: 1; }
+.expand-clip { overflow: hidden; min-height: 0; }
+.full-story { padding-top: 18px; }
+.full-story p { margin: 0 0 0.9em; }
+.full-story p:last-child { margin-bottom: 0; }
+
+/* Out of your hands: a lighter panel between rounds, in the gray Event style */
+.event-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-items: start center;
+  padding: calc(var(--strip-h) + 12px) var(--gutter) 24px;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms var(--ease), padding-top 700ms var(--ease);
+}
+.event-panel.on { opacity: 1; pointer-events: auto; }
+/* v5.7: Read more open: centered (padding-top set by placeEventPanel in game.js), with
+   equal room above and below */
+.event-panel.ep-open .ep-inner { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); }
+.ep-inner {
+  width: min(680px, 100%);
+  max-height: calc(100vh - var(--strip-h) - 36px);
+  max-height: calc(100dvh - var(--strip-h) - 36px);
+  overflow-y: auto;
+  padding: 34px 38px 30px;
+  border: 1px dashed rgba(179, 174, 164, 0.6);
+  border-radius: 10px;
+  background: linear-gradient(to bottom, rgba(143, 137, 126, 0.12), rgba(143, 137, 126, 0.05)), #050505;
+  transform: translateY(10px);
+  transition: transform 900ms var(--ease), max-height 700ms var(--ease);
+}
+.event-panel.on .ep-inner { transform: none; }
+.ep-inner .headline { font-size: clamp(28px, 3vw, 38px); }
+.ep-inner .body-text { font-size: 18px; color: var(--text); }
+.ep-actions { margin-top: 26px; }
+#event-continue.fade { transform: none; }
+
+/* The capability gauge: top right, beside the mute button */
+.gauge {
+  position: fixed;
+  z-index: 6;
+  top: calc(var(--safe-top) + 26px);
+  right: calc(max(12px, env(safe-area-inset-right)) + 56px);
+  width: 244px;
+  text-align: right;
+  opacity: 0;
+  visibility: hidden;
+  cursor: help;
+  translate: 0 calc(var(--away, 0) * -100%);
+  transition: opacity 1200ms var(--ease), visibility 0s linear 1200ms;
+}
+.gauge.on { opacity: calc(1 - var(--away, 0)); visibility: visible; transition: opacity 1200ms var(--ease), visibility 0s; }
+#strip.tied ~ .gauge.on, .gauge.on.tied { transition: none; }
+.g-title { position: relative; z-index: 1; top: 2em; /* two font sizes lower, over the graph's empty top */ margin: 0 0 -10px; text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-2); }
+/* The curve: the whole area faint, and the part AI has reached filled in its color,
+   up to a bright edge (--g across, --gy the curve's height there) */
+.g-chart { position: relative; height: 90px; }
+.g-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.g-back .g-area { fill: rgba(236, 230, 218, 0.07); }
+.g-back .g-line { fill: none; stroke: rgba(236, 230, 218, 0.22); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.g-front {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(-4px calc((1 - var(--g, 0)) * 100%) 0 0); /* eased by updateGauge() in game.js */
+  transition: filter 600ms var(--ease);
+}
+.g-front .g-area { fill: color-mix(in srgb, var(--accent) 62%, transparent); }
+.g-front .g-line { fill: none; stroke: color-mix(in srgb, var(--accent) 50%, #fff); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.g-edge {
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--g, 0) * 100%);
+  width: 1.5px;
+  height: calc(var(--gy, 0) * 100%);
+  margin-left: -0.75px;
+  background: color-mix(in srgb, var(--accent) 45%, #fff);
+}
+.g-names { position: relative; height: 16px; margin-top: 6px; }
+.g-name { position: absolute; right: 0; top: 0; font-size: 10.5px; letter-spacing: 0.04em; color: var(--accent-text); white-space: nowrap; opacity: 0; transition: opacity 900ms var(--ease); }
+.g-name.on { opacity: 1; }
+.gauge.glow .g-front { animation: gaugeGlow 1800ms var(--ease); }
+.gauge.pulse .g-front { animation: gaugePulse 1400ms var(--ease); }
+@keyframes gaugeGlow { 0%, 100% { filter: none; } 40% { filter: drop-shadow(0 0 7px var(--accent)) brightness(1.25); } }
+@keyframes gaugePulse { 0%, 100% { filter: none; } 45% { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 70%, transparent)); } }
+/* The dropdown: the latest step, on hover or tap */
+.g-drop {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  width: 250px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(16, 17, 19, 0.97);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 10px 30px rgba(0, 0, 0, 0.7);
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 -6px;
+  pointer-events: none;
+  transition: opacity 400ms var(--ease), translate 400ms var(--ease), visibility 0s linear 400ms;
+}
+.gauge.open .g-drop { opacity: 1; visibility: visible; translate: 0 0; transition: opacity 400ms var(--ease), translate 400ms var(--ease), visibility 0s; }
+.gauge.open .g-caption { opacity: 0; }
+.g-drop-head { margin: 0 0 6px; font-size: 11.5px; letter-spacing: 0.04em; color: var(--accent-text); }
+.g-drop-text { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text); }
+.g-drop-why { margin: 8px 0 0; font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--accent-text); }
+/* Ahead (v5.6): what the gauge expects next, and why */
+.g-drop-ahead { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.g-drop-label { margin: 0 0 6px; font-size: 9.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-2); }
+.g-drop-then { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--text-2); }
+@media (max-width: 760px) {
+  /* After the base rules, so they win: a compact gauge on phones */
+  .gauge { width: 115px; right: calc(max(12px, env(safe-area-inset-right)) + 48px); top: calc(var(--safe-top) + 8px); }
+  .g-title { font-size: 8px; }
+  .g-chart { height: 34px; }
+  .g-title { margin-bottom: 4px; top: 0; } /* no room to lower it here: the strip's label rows sit beside the gauge */
+  .g-names { height: 14px; margin-top: 4px; }
+}
+/* "2031 · AGI achieved", for about 4 s */
+/* Milestone captions (v5.8: a stretch's stack, one pill each, fading out together) */
+.g-caption {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 8px 0 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms var(--ease);
+}
+.g-caption.on { opacity: 1; pointer-events: auto; }
+.g-cap {
+  padding: 5px 10px;
+  max-width: 240px;
+  width: max-content;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+  font-size: 12px;
+  color: var(--accent-text);
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.g-cap.in { opacity: 1; }
+/* During the Interlude the strip and gauge stay above its dimming, so the years and the
+   milestones they bring can be watched as they pass (v5.8) */
+body.il-lift .strip-bg { z-index: 8; }
+body.il-lift .strip, body.il-lift .gauge { z-index: 9; }
+
+/* A short definition, on hover or tap */
+.tip {
+  position: fixed;
+  z-index: 11;
+  max-width: 280px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(10, 12, 14, 0.96);
+  box-shadow: 0 0 0 1px rgba(159, 180, 199, 0.35), 0 10px 30px rgba(0, 0, 0, 0.7);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease), visibility 0s linear 300ms;
+}
+.tip.on { opacity: 1; visibility: visible; transition: opacity 300ms var(--ease), visibility 0s; }
+/* v5.2: structured tips. A small label in the item's color, the text, and why it happened. */
+.tip-head { margin: 0 0 4px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-text); }
+.tip-text { margin: 0; }
+.tip-why { margin: 8px 0 0; font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--accent-text); }
+
+/* ---------------------------------------------------------------------------
+   v4: the placeholder face (a card whose art isn't made yet)
+   --------------------------------------------------------------------------- */
+
+/* Placeholder face: a plain dark card, a thin frame in the cream of the real cards'
+   border, faint diagonal hatching, an hourglass and a note that it's temporary.
+   Everything is in cqw (the card's width), so it reads the same at every size. */
+.ph {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5cqw;
+  padding: 0 16cqw;
+  text-align: center;
+  color: #ebdabc;
+  background:
+    repeating-linear-gradient(135deg, rgba(235, 218, 188, 0.035) 0 2cqw, transparent 2cqw 6cqw),
+    radial-gradient(120% 80% at 50% 42%, #2a251f, #14110e);
+}
+.ph-frame {
+  position: absolute;
+  inset: 4.5cqw;
+  border: max(1px, 0.5cqw) solid rgba(235, 218, 188, 0.55);
+  border-radius: calc(100cqw / 48);
+  pointer-events: none;
+}
+.ph-frame::after {
+  content: "";
+  position: absolute;
+  inset: 2cqw;
+  border: max(1px, 0.25cqw) dashed rgba(235, 218, 188, 0.28);
+  border-radius: calc(100cqw / 64);
+}
+.ph-mark { width: 16cqw; height: auto; opacity: 0.75; margin-bottom: 2cqw; }
+.ph-title {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 6.4cqw;
+  letter-spacing: 0.32em;
+  margin-right: -0.32em; /* letter-spacing leaves a gap after the last letter */
+  text-transform: uppercase;
+}
+.ph-note {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 7.4cqw;
+  line-height: 1.3;
+  color: #c9c2b5;
+}
+/* Small cards (strip markers, results thumbnails, the deck): the frame and mark only */
+@container (max-width: 130px) {
+  .ph-title, .ph-note { display: none; }
+  .ph-mark { width: 30cqw; margin: 0; }
+}
+@container (max-width: 30px) {
+  .ph-mark, .ph-frame::after { display: none; }
+}
+
+/* Home: the history Timeline up to Now, the title, and the way in */
+#home { display: grid; place-items: center; padding: 0 var(--gutter); overflow-y: auto; }
+.home-inner { width: 100%; text-align: center; padding: 48px 0; opacity: 0; }
+#home.active .home-inner { animation: fadeIn 1800ms var(--ease) 200ms forwards; }
+/* The history Timeline: evenly spaced along one line that runs on past both ends and
+   fades out in both directions (homeTimeline() in game.js). Labels alternate above and below. */
+.home-tl {
+  --step: 104px;
+  --pad: max(30vw, 160px);
+  --lab: 180px;
+  width: 100vw;
+  margin: 0 calc(50% - 50vw) 44px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+}
+.home-tl::-webkit-scrollbar { display: none; }
+.htl-track {
+  position: relative;
+  height: 196px;
+  width: calc(var(--pad) * 2 + (var(--n, 17) - 1) * var(--step));
+}
+.htl-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--text-faint);
+}
+.htl-item {
+  appearance: none;
+  position: absolute;
+  top: 50%;
+  left: calc(var(--pad) + var(--i) * var(--step));
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+  opacity: 0;
+}
+#home.active .htl-item { animation: fadeIn 1400ms var(--ease) calc(500ms + var(--i) * 70ms) forwards; }
+.htl-dot {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dc, var(--text-2));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--dc, transparent) 60%, transparent);
+  transition: background 400ms var(--ease), transform 400ms var(--ease);
+}
+/* A short tick from the line to the label */
+.htl-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 14px;
+  background: var(--text-faint);
+  opacity: 0.6;
+}
+.htl-item.above::before { bottom: 8px; }
+.htl-item.below::before { top: 8px; }
+.htl-label {
+  position: absolute;
+  left: calc(var(--lab) / -2);
+  width: var(--lab);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  padding: 4px 0;
+}
+.htl-item.above .htl-label { bottom: 24px; flex-direction: column; }
+.htl-item.below .htl-label { top: 24px; }
+.htl-date { font-size: 12px; letter-spacing: 0.06em; color: var(--text-2); }
+.htl-title {
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--text);
+  transition: color 400ms var(--ease);
+}
+.htl-item:not(.htl-now) { cursor: help; }
+.htl-item:not(.htl-now):hover .htl-dot,
+.htl-item:not(.htl-now):focus-visible .htl-dot { transform: scale(1.5); }
+.htl-item:focus-visible { outline: none; }
+.htl-item:focus-visible .htl-title { text-decoration: underline; text-underline-offset: 3px; }
+.htl-now .htl-dot {
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--text);
+  box-shadow: 0 0 14px rgba(236, 230, 218, 0.55);
+}
+.htl-now .htl-title { font-size: 15px; letter-spacing: 0.06em; }
+/* The hit area: the dot and its label */
+.htl-item:not(.htl-now)::after {
+  content: "";
+  position: absolute;
+  left: -36px;
+  width: 72px;
+  height: 84px;
+}
+.htl-item.above::after { bottom: -10px; }
+.htl-item.below::after { top: -10px; }
+.home-title {
+  margin: 0 0 16px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(54px, 10.5vw, 128px);
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+}
+.home-tagline {
+  margin: 0 auto 44px;
+  max-width: 28em;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(19px, 2.2vw, 24px);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.home-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.home-nav .btn { min-width: 132px; }
+
+/* About: a plain reading page */
+#about { overflow-y: auto; overflow-x: hidden; }
+/* Spaced so that at 1440 × 900 the Play button sits above the fold */
+.about-inner { max-width: 680px; margin: 0 auto; padding: calc(var(--safe-top) + 72px) var(--gutter) 96px; }
+.about-inner .ex-title { margin-bottom: 30px; text-align: center; }
+.about-text p { margin: 0 0 0.9em; font-family: var(--serif); font-weight: 400; font-size: 23px; line-height: 1.58; }
+.about-text .about-sign { margin: 0.6em 0 0; text-align: right; font-style: italic; color: var(--text-2); }
+.about-actions { justify-content: center; margin-top: 0; }
+#about.active .about-inner { animation: fadeIn 1400ms var(--ease) both; }
+.about-inner { opacity: 0; }
+
+/* v5.8: the Futures collection, a gallery of frames (empty until found) */
+#futures { overflow-y: auto; overflow-x: hidden; }
+.futures-inner { max-width: 1120px; margin: 0 auto; padding: calc(var(--safe-top) + 72px) var(--gutter) 96px; text-align: center; opacity: 0; }
+#futures.active .futures-inner { animation: fadeIn 1400ms var(--ease) both; }
+.futures-inner .ex-title { margin-bottom: 14px; }
+.futures-tally { margin: 0 0 48px; font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-2); font-variant-numeric: tabular-nums; }
+/* Flex, not grid, so a last row that isn't full is centered */
+.futures-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px 28px; }
+.fcell { flex: 0 0 calc((100% - 5 * 28px) / 6); min-width: 150px; appearance: none; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: center; }
+.fcell .fcell-card, .fcell-frame { width: 100%; max-width: 170px; }
+.fcell-frame {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 9 / 16;
+  border: 1px dashed rgba(236, 230, 218, 0.22);
+  border-radius: 6px;
+  color: var(--text-faint); /* the hourglass is decorative */
+}
+.fcell-frame .ph-mark { width: 22%; opacity: 0.5; }
+.fcell.found { cursor: pointer; }
+.fcell.found .cface { transition: transform 600ms var(--ease), box-shadow 600ms var(--ease); }
+.fcell.found:hover .cface, .fcell.found:focus-visible .cface { transform: translateY(-4px); box-shadow: 0 10px 22px rgba(0, 0, 0, 0.75), 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent); }
+.fcell.found:focus-visible { outline: none; }
+.fcell-title { margin-top: 4px; font-family: var(--serif); font-size: 21px; line-height: 1.2; color: var(--accent-text); }
+.fcell-tagline { max-width: 190px; font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--text-2); }
+/* A found Future's story, read over the gallery */
+.fs-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow-y: auto;
+  background: rgba(14, 14, 12, 0.97);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms var(--ease);
+}
+.fs-panel.on { opacity: 1; pointer-events: auto; }
+/* While a story is open, the gallery behind it fades away (and back on Back) */
+.futures-fade { transition: opacity 900ms var(--ease); }
+#futures.reading .futures-fade { opacity: 0; }
+.fs-inner { max-width: 680px; margin: 0 auto; padding: calc(var(--safe-top) + 72px) var(--gutter) 96px; text-align: center; }
+.fs-card { width: 180px; margin: 0 auto 30px; }
+.fs-date { color: var(--accent-text); }
+.fs-title { margin: 6px 0 8px; font-family: var(--serif); font-weight: 300; font-size: clamp(38px, 5vw, 56px); line-height: 1.05; color: var(--accent-text); }
+.fs-tagline { margin: 0 0 40px; font-family: var(--serif); font-style: italic; font-size: 21px; color: var(--text-2); }
+.fs-text { text-align: left; }
+@media (max-width: 760px) {
+  .futures-grid { gap: 32px 18px; }
+  .fcell { flex-basis: calc((100% - 18px) / 2); min-width: 0; }
+  .fcell-title { font-size: 19px; }
+  .futures-inner, .fs-inner { padding-top: calc(var(--safe-top) + 96px); }
+}
+
+/* The Back pill (About, and the game's top-left corner) */
+.ex-top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 0;
+  padding: 0 var(--gutter);
+}
+.ex-back {
+  appearance: none;
+  position: relative;
+  top: calc(var(--safe-top) + 20px);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 20px 10px 16px;
+  min-height: 40px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: color 400ms var(--ease), border-color 400ms var(--ease);
+}
+.ex-back::before { content: "\2190"; margin-right: 10px; letter-spacing: 0; }
+.ex-back:hover, .ex-back:focus-visible { color: var(--text); border-color: rgba(236, 230, 218, 0.5); outline: none; }
+
+.ex-title {
+  margin: 0 0 18px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(44px, 6vw, 76px);
+  line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .home-tl {
+    --step: 88px;
+    --pad: 50vw;
+    --lab: 150px;
+    margin-bottom: 28px;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+  }
+  .htl-title { font-size: 12.5px; }
+  .htl-date { font-size: 11px; }
+  .home-title { font-size: 11.6vw; white-space: nowrap; }
+  .about-inner { padding-top: calc(var(--safe-top) + 96px); }
+  .about-text p { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #home.active .htl-item { animation-delay: 0ms; }
+}

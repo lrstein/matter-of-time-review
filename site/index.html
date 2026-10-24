@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#161614">
+  <title>A Matter of Time</title>
+  <link rel="icon" href="data:,">
+  <meta name="description" content="An interactive piece about AI and the futures we might choose.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- All words come from content/story.md: elements with data-ui="Label" get that UI TEXT entry. -->
+
+  <!-- v5.8: faint cosmic wisps, like the far ends of galaxies, behind the stars -->
+  <div class="nebula" aria-hidden="true"></div>
+  <!-- Ambient particles, behind everything -->
+  <canvas id="particles" class="particles" aria-hidden="true"></canvas>
+
+  <!-- Shown only if content/story.md can't be loaded (e.g. the page was opened straight from Finder) -->
+  <section id="nostory" class="screen" aria-live="polite">
+    <div class="nostory-inner">
+      <p class="nostory-title">A Matter of Time</p>
+      <p class="nostory-text">To play, double-click <strong>start.command</strong> in the game&rsquo;s tools folder.</p>
+    </div>
+  </section>
+
+  <!-- Home: where the page opens. The history Timeline up to Now, Play (the Disclaimer, then the game) and About. The capability gauge sits top right. -->
+  <section id="home" class="screen" aria-labelledby="home-title">
+    <div class="home-inner">
+      <div id="home-tl" class="home-tl"><div class="htl-track"></div></div>
+      <h1 id="home-title" class="home-title" data-ui="Home title"></h1>
+      <p class="home-tagline" data-ui="Home tagline"></p>
+      <nav class="home-nav">
+        <button id="home-play" class="btn" type="button" data-ui="Play button"></button>
+        <button id="home-restart" class="btn btn-quiet" type="button" data-ui="Restart button" hidden></button>
+        <button id="home-futures" class="btn btn-quiet" type="button" data-ui="Collection button"></button>
+        <button id="home-about" class="btn btn-quiet" type="button" data-ui="About button"></button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- v5.8: the Futures collection. Every Future, as an empty frame until the player reaches
+       it; then its card, title and tagline. A found Future opens its story. -->
+  <section id="futures" class="screen" aria-labelledby="futures-title">
+    <div class="ex-top"><button id="futures-back" class="ex-back" type="button" data-ui="Back button"></button></div>
+    <div class="futures-inner"><div class="futures-fade">
+      <h1 id="futures-title" class="ex-title" data-ui="Collection heading"></h1>
+      <p id="futures-tally" class="futures-tally"></p>
+      <div id="futures-grid" class="futures-grid"></div>
+    </div></div>
+    <div id="fs-panel" class="fs-panel" role="dialog" aria-modal="true" aria-labelledby="fs-title">
+      <div class="ex-top"><button id="fs-back" class="ex-back" type="button" data-ui="Back button"></button></div>
+      <div class="fs-inner">
+        <div id="fs-card" class="cardthumb fs-card"><div class="cface"></div></div>
+        <p class="dateline fs-date" data-ui="Future dateline"></p>
+        <h2 id="fs-title" class="fs-title"></h2>
+        <p id="fs-tagline" class="fs-tagline"></p>
+        <div id="fs-text" class="future-text fs-text"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="screen" aria-labelledby="about-title">
+    <div class="ex-top"><button id="about-back" class="ex-back" type="button" data-ui="About back button"></button></div>
+    <div class="about-inner">
+      <h1 id="about-title" class="ex-title"></h1>
+      <div id="about-text" class="about-text"></div>
+      <div class="reveal-actions about-actions"><button id="about-play" class="btn" type="button" data-ui="Play button"></button></div>
+    </div>
+  </section>
+
+  <!-- Disclaimer: after Play it fades in, stays 5 s, and fades out slowly into the game. -->
+  <section id="disclaimer" class="screen" aria-label="Before you begin">
+    <div class="disclaimer-inner">
+      <p class="disclaimer-text" data-ui="Disclaimer"></p>
+    </div>
+  </section>
+
+  <!-- Timeline strip: stays across the top during the game; cards land here -->
+  <div id="strip" class="strip" aria-hidden="true"></div>
+  <div id="strip-bg" class="strip-bg" aria-hidden="true"></div>
+
+  <!-- The table: the deck, the drawn card, and the reading column. Used for Rounds, Events and the Future. -->
+  <section id="table" class="screen">
+    <div class="table-inner">
+      <div class="stage" id="stage">
+        <div class="deck-col"><div id="deck" class="deck" aria-hidden="true"></div></div>
+        <div class="card-col">
+          <!-- "Round 1 of 6", above the drawn card; it keeps its space, so the card never moves -->
+          <p id="round-marker" class="round-marker fade"></p>
+          <div id="card-slot" class="card-slot"><div id="card-glow" class="card-glow"></div></div>
+        </div>
+
+        <div class="reading" id="reading">
+          <!-- A Scenario (Round): the summary first, the full story on request -->
+          <div id="round-view" class="round-view" hidden>
+            <p id="dateline" class="dateline"></p>
+            <h2 id="headline" class="headline"></h2>
+            <div id="summary" class="body-text summary"></div>
+            <button id="story-toggle" class="read-toggle" type="button" aria-expanded="false" aria-controls="story-more"></button>
+            <div id="story-more" class="expand"><div class="expand-clip"><div id="body" class="body-text full-story"></div></div></div>
+            <p id="question" class="question"></p>
+            <div id="choices" class="choices" role="group" aria-label="Choices"></div>
+            <div id="result" class="result" hidden>
+              <p class="result-label" data-ui="Result label"></p>
+              <div id="result-text" class="result-text"></div>
+            </div>
+            <div class="result-actions"><button id="btn-continue" class="btn" type="button" data-ui="Continue button" hidden></button></div>
+          </div>
+
+          <!-- Future -->
+          <div id="future-view" class="future-view" hidden>
+            <p id="future-date" class="future-date" data-ui="Future dateline"></p>
+            <h1 id="future-title" class="future-title"></h1>
+            <p id="future-tagline" class="future-tagline"></p>
+            <!-- How we got here: one or two sentences from the player's own decisions -->
+            <div id="future-past" class="future-past" hidden>
+              <p id="future-past-label" class="future-past-label" data-ui="Looking back label"></p>
+              <div id="future-past-text" class="future-past-text"></div>
+            </div>
+            <div id="future-text" class="future-text"></div>
+            <p id="future-hint" class="future-hint" data-ui="Tap to continue"></p>
+            <div id="reveal-actions" class="reveal-actions">
+              <button id="btn-explain" class="btn" type="button" data-ui="See what you chose button"></button>
+              <button id="btn-again" class="btn btn-quiet" type="button" data-ui="Play again button"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- "See what you chose" -->
+      <div id="explain" class="explain" hidden>
+        <!-- v5.6: the six hidden Values first, then the Timeline (with each Choice's effect on them and every milestone on it; v5.8: no separate State of the art section) -->
+        <h2 class="explain-title values-first" data-ui="Values heading"></h2>
+        <p class="values-hint" data-ui="Values hint"></p>
+        <div id="bars" class="bars"></div>
+        <h2 class="explain-title" data-ui="Your timeline heading"></h2>
+        <div id="ptl" class="atl ptl"></div>
+        <div class="reveal-actions explain-actions">
+          <button id="btn-again-2" class="btn" type="button" data-ui="Play again button"></button>
+          <button id="btn-home" class="btn btn-quiet" type="button" data-ui="Home button"></button>
+        </div>
+        <p class="signature" data-ui="Signature"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Out of your hands: an Event, as a panel between rounds (never a card) -->
+  <div id="event-panel" class="event-panel" role="dialog" aria-modal="false" aria-labelledby="ep-headline">
+    <div class="ep-inner" id="ep-inner">
+      <p class="event-label" data-ui="Event label"></p>
+      <p id="ep-dateline" class="dateline"></p>
+      <h2 id="ep-headline" class="headline"></h2>
+      <div id="ep-summary" class="body-text summary"></div>
+      <button id="event-toggle" class="read-toggle" type="button" aria-expanded="false" aria-controls="ep-more"></button>
+      <div id="ep-more" class="expand"><div class="expand-clip"><div id="ep-body" class="body-text full-story"></div></div></div>
+      <div class="ep-actions"><button id="event-continue" class="btn" type="button" data-ui="Continue button"></button></div>
+    </div>
+  </div>
+
+  <!-- The capability gauge: milestones move it. Hover or tap for a short definition. -->
+  <div id="gauge" class="gauge" data-level="1">
+    <p class="g-title" data-ui="Gauge label"></p>
+    <!-- A curve of capability; the area under it fills in as AI gets further along (buildGauge) -->
+    <div class="g-chart" id="gauge-chart">
+      <svg class="g-svg g-back" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"><path class="g-area"/><path class="g-line"/></svg>
+      <div class="g-front"><svg class="g-svg" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"><path class="g-area"/><path class="g-line"/></svg></div>
+      <span class="g-edge"></span>
+    </div>
+    <div class="g-names" id="gauge-names"></div>
+    <p id="gauge-caption" class="g-caption" tabindex="-1"></p>
+    <!-- On hover or tap: the latest step, briefly -->
+    <div class="g-drop" id="gauge-drop"><p class="g-drop-head"></p><p class="g-drop-text"></p><p class="g-drop-why" hidden></p><div class="g-drop-ahead"></div></div>
+  </div>
+  <div id="tip" class="tip" role="tooltip"></div>
+
+  <!-- A tipping point: a full-screen beat in place of "As a result…", with no card and no image -->
+  <div id="tipping" class="tipping" aria-live="polite">
+    <div class="tipping-inner">
+      <p id="tp-label" class="tp-label"></p>
+      <h2 id="tp-headline" class="tp-headline"></h2>
+      <div id="tp-text" class="tp-text"></div>
+      <p id="tp-hint" class="future-hint tp-hint" data-ui="Tap to continue"></p>
+      <div class="ep-actions"><button id="tp-continue" class="btn" type="button" data-ui="Continue button"></button></div>
+    </div>
+  </div>
+
+  <!-- Between cards: the years count up to the next card, the milestones they pass, the lead-in -->
+  <div id="interlude" class="interlude" aria-live="polite">
+    <div class="interlude-inner">
+      <p id="il-year" class="il-year"></p>
+      <p id="il-gap" class="il-gap"></p>
+      <div id="il-sotas" class="il-sotas"></div>
+      <p id="il-lead" class="il-lead"></p>
+      <div class="il-actions"><button id="il-continue" class="btn" type="button" data-ui="Continue button"></button></div>
+    </div>
+  </div>
+
+  <!-- Persistent chrome -->
+  <button id="home-corner" class="ex-back home-corner" type="button" data-ui="Back button"></button>
+  <button id="mute" class="mute" type="button" aria-pressed="false" aria-label="Mute sound">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/>
+      <path class="waves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path class="cross" d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+
+  <script src="js/story-parser.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
